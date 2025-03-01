@@ -2,18 +2,21 @@ const express = require('express')
 const cors = require('cors')
 
 const app = express()
-
-app.use(cors({
-    origin: [
-        "https://project-grykc0va8nbwvtfs0zcq.framercanvas.com",   // Framer preview
-        "https://framer.app",                                       // Framer published sites
-        "https://your-framer-published-site.framer.website"         // Add your actual published URL here if known
-    ]
-}))
-
 app.use(express.json())
 
-let likeCount = 0
+// Flexible CORS - works for all Framer preview & published projects
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || origin.endsWith(".framercanvas.com") || origin.endsWith(".framer.website")) {
+            callback(null, true)
+        } else {
+            console.log("Blocked by CORS:", origin)
+            callback(new Error("Not allowed by CORS"))
+        }
+    }
+}))
+
+let likeCount = 0 // This is temporary (resets if server restarts)
 
 app.get('/likes', (req, res) => {
     res.json({ count: likeCount })
@@ -30,5 +33,4 @@ app.post('/likes', (req, res) => {
 })
 
 const PORT = process.env.PORT || 8080
-app.listen(PORT, () => console.log(`✅ Like counter running on port ${PORT}`))
-
+app.listen(PORT, () => console.log(`✅ Like counter server running on port ${PORT}`))
