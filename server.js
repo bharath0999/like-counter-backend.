@@ -3,9 +3,12 @@ const cors = require('cors')
 
 const app = express()
 
-// Allow all origins for now (you can restrict it later to your specific Framer domain if needed)
 app.use(cors({
-    origin: "*"
+    origin: [
+        "https://project-grykc0va8nbwvtfs0zcq.framercanvas.com",   // Framer preview
+        "https://framer.app",                                       // Framer published sites
+        "https://your-framer-published-site.framer.website"         // Add your actual published URL here if known
+    ]
 }))
 
 app.use(express.json())
