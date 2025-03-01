@@ -1,5 +1,12 @@
 const express = require('express')
 const cors = require('cors')
+const admin = require('firebase-admin')
+
+// Initialize Firebase Admin SDK
+admin.initializeApp({
+    credential: admin.credential.applicationDefault() // Ensure your environment is set up with proper credentials
+});
+const db = admin.firestore();
 
 const app = express()
 app.use(express.json())
@@ -16,20 +23,44 @@ app.use(cors({
     }
 }))
 
-let likeCount = 0 // This is temporary (resets if server restarts)
+// Instead of an in-memory likeCount, use a Firestore document:
+const docRef = db.collection("likes").doc("likeCount")
 
-app.get('/likes', (req, res) => {
-    res.json({ count: likeCount })
+app.get('/likes', async (req, res) => {
+    try {
+        const docSnap = await docRef.get()
+        if (docSnap.exists) {
+            res.json({ count: docSnap.data().count })
+        } else {
+            // If the document doesn't exist, create it with count = 0
+            await docRef.set({ count: 0 })
+            res.json({ count: 0 })
+        }
+    } catch (error) {
+        console.error("Error reading like count:", error)
+        res.status(500).send("Error reading like count")
+    }
 })
 
-app.post('/likes', (req, res) => {
+app.post('/likes', async (req, res) => {
     const { action } = req.body
-    if (action === 'like') {
-        likeCount++
-    } else if (action === 'unlike') {
-        likeCount = Math.max(0, likeCount - 1)
+    try {
+        await db.runTransaction(async (transaction) => {
+            const docSnap = await transaction.get(docRef)
+            let currentCount = docSnap.exists ? docSnap.data().count : 0
+            if (action === 'like') {
+                currentCount++
+            } else if (action === 'unlike') {
+                currentCount = Math.max(0, currentCount - 1)
+            }
+            transaction.update(docRef, { count: currentCount })
+        })
+        const updatedDoc = await docRef.get()
+        res.json({ count: updatedDoc.data().count })
+    } catch (error) {
+        console.error("Error updating like count:", error)
+        res.status(500).send("Error updating like count")
     }
-    res.json({ count: likeCount })
 })
 
 const PORT = process.env.PORT || 8080
