@@ -2,10 +2,15 @@ const express = require('express')
 const cors = require('cors')
 
 const app = express()
-app.use(cors())
+
+// Allow all origins for now (you can restrict it later to your specific Framer domain if needed)
+app.use(cors({
+    origin: "*"
+}))
+
 app.use(express.json())
 
-let likeCount = 0 // This resets if the server restarts. (Optional: Add a database for permanent storage)
+let likeCount = 0
 
 app.get('/likes', (req, res) => {
     res.json({ count: likeCount })
@@ -23,3 +28,4 @@ app.post('/likes', (req, res) => {
 
 const PORT = process.env.PORT || 8080
 app.listen(PORT, () => console.log(`✅ Like counter running on port ${PORT}`))
+
