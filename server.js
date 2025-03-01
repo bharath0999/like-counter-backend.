@@ -7,7 +7,7 @@ app.use(express.json())
 // Flexible CORS - works for all Framer preview & published projects
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || origin.endsWith(".framercanvas.com") || origin.endsWith(".framer.website")) {
+        if (!origin || origin.endsWith(".framercanvas.com") || origin.endsWith(".framer.app")) {
             callback(null, true)
         } else {
             console.log("Blocked by CORS:", origin)
